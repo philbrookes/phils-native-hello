@@ -32,6 +32,12 @@ import com.feedhenry.sdk.api.FHCloudRequest;
 
 import org.json.fh.JSONObject;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+
+import cz.msebera.android.httpclient.conn.scheme.SchemeRegistry;
+import cz.msebera.android.httpclient.impl.client.DefaultHttpClient;
+
 public class HelloFragment extends Fragment {
 
     private static final String TAG = InitFragment.class.getName();
@@ -58,7 +64,12 @@ public class HelloFragment extends Fragment {
         try {
             JSONObject params = new JSONObject("{hello: 'world'}");
 
-            FHCloudRequest request = FH.buildCloudRequest("hello", "POST", null, params);
+            NewFHCloudRequest request = new NewFHCloudRequest(getActivity());
+            request.mPath = "hello";
+            request.mMethod = FHCloudRequest.Methods.POST;
+            request.mHeaders = null;
+            request.mArgs = params;
+
             request.executeAsync(new FHActCallback() {
                 @Override
                 public void success(FHResponse fhResponse) {

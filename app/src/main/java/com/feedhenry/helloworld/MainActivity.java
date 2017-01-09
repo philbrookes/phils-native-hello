@@ -23,11 +23,53 @@ import android.support.v7.widget.Toolbar;
 import com.feedhenry.helloworld_android.R;
 import com.feedhenry.sdk.FH;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        SSLContext ctx = null;
+        try {
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            InputStream fis = getAssets().open("client.p12");
+            keyStore.load(fis, "pl0o9i8u".toCharArray());
+
+            KeyManagerFactory kmf = KeyManagerFactory.getInstance("X509");
+            kmf.init(keyStore, "pl0o9i8u".toCharArray());
+            KeyManager[] keyManagers = kmf.getKeyManagers();
+
+            ctx = SSLContext.getInstance("TLS");
+            ctx.init(keyManagers, new TrustManager[] {
+                    new X509TrustManager() {
+                        public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+                        public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+                        public X509Certificate[] getAcceptedIssuers() { return new X509Certificate[]{}; };
+                    }
+            }, null);
+            HttpsURLConnection.setDefaultSSLSocketFactory(ctx.getSocketFactory());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         setContentView(R.layout.main_activity);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
